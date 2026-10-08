@@ -76,8 +76,27 @@ struct AccountUsage: Equatable {
 
 enum UsageOrigin: String {
     case official = "官方 App Server"
+    case officialCache = "官方上次成功数据"
     case localLogs = "本机日志估算"
     case unavailable = "暂无数据"
+}
+
+struct RateLimitSelection {
+    let snapshot: RateLimitSnapshot?
+    let origin: UsageOrigin
+
+    static func preferOfficial(
+        current: RateLimitSnapshot?,
+        cached: RateLimitSnapshot?
+    ) -> RateLimitSelection {
+        if let current {
+            return RateLimitSelection(snapshot: current, origin: .official)
+        }
+        if let cached {
+            return RateLimitSelection(snapshot: cached, origin: .officialCache)
+        }
+        return RateLimitSelection(snapshot: nil, origin: .unavailable)
+    }
 }
 
 struct UsageSnapshot: Equatable {

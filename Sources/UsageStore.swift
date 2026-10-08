@@ -7,6 +7,7 @@ final class UsageService: @unchecked Sendable {
     private let appServer: AppServerClient
     private let localScanner: LocalTokenScanner
     private let fileManager: FileManager
+    private var cachedOfficialRateLimits: RateLimitSnapshot?
 
     init(
         appServer: AppServerClient = AppServerClient(),
@@ -21,14 +22,19 @@ final class UsageService: @unchecked Sendable {
     func fetch() -> UsageSnapshot {
         let official = appServer.fetch()
         let officialToday = official.usage?.todayTokens
-        let needsLocal = officialToday == nil || official.rateLimits == nil
+        let needsLocal = officialToday == nil
         let local = needsLocal ? localScanner.scanToday() : nil
         let localLogsAvailable = hasReadableLocalLogs
 
-        let rateLimits = official.rateLimits ?? local?.rateLimits
-        let rateOrigin: UsageOrigin = official.rateLimits != nil
-            ? .official
-            : (local?.rateLimits != nil ? .localLogs : .unavailable)
+        if let currentRateLimits = official.rateLimits {
+            cachedOfficialRateLimits = currentRateLimits
+        }
+        let rateSelection = RateLimitSelection.preferOfficial(
+            current: official.rateLimits,
+            cached: cachedOfficialRateLimits
+        )
+        let rateLimits = rateSelection.snapshot
+        let rateOrigin = rateSelection.origin
 
         let todayTokens: Int64?
         let todayBreakdown: TokenBreakdown?
@@ -55,15 +61,15 @@ final class UsageService: @unchecked Sendable {
                 notes.append("当前 Codex 版本尚无官方日用量接口，显示本机估算")
             }
         }
-        if rateOrigin == .localLogs {
-            notes.append("额度来自最近一次本机响应，可能有延迟")
+        if rateOrigin == .officialCache {
+            notes.append("官方额度刷新失败，显示上次成功数据")
         } else if rateOrigin == .unavailable, let diagnostic = official.diagnostic {
             notes.append(diagnostic)
         }
         if let windows = rateLimits,
            [windows.primary, windows.secondary].compactMap({ $0?.resetsAt }).contains(where: { $0 < Date() }),
-           rateOrigin == .localLogs {
-            notes.append("额度快照已过重置时间，请在 Codex 使用后刷新")
+           rateOrigin == .officialCache {
+            notes.append("官方额度快照已过重置时间，等待刷新")
         }
 
         return UsageSnapshot(

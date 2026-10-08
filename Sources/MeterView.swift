@@ -17,7 +17,7 @@ struct MeterView: View {
     let presentation: MeterPresentation
     let actions: MeterActions
 
-    private var width: CGFloat { presentation == .desktop ? 344 : 368 }
+    private var width: CGFloat { presentation == .desktop ? 368 : 392 }
 
     var body: some View {
         ZStack {
@@ -40,14 +40,15 @@ struct MeterView: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(Color.white.opacity(0.14), lineWidth: 1)
 
-            VStack(spacing: 16) {
+            VStack(spacing: 11) {
                 header
+                codexHeader
                 quotaSection
                 todaySection
                 sourceSection
                 actionRow
             }
-            .padding(18)
+            .padding(16)
         }
         .frame(width: width)
         .fixedSize(horizontal: false, vertical: true)
@@ -74,21 +75,12 @@ struct MeterView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Codex Meter")
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                Text("额度与 Token 活动")
+                Text("Codex 额度与 Token")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 8)
-
-            if let plan = store.snapshot.rateLimits?.planType, !plan.isEmpty {
-                Text(plan.uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.cyan)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(Color.cyan.opacity(0.12), in: Capsule())
-            }
 
             Button(action: store.refresh) {
                 Group {
@@ -115,6 +107,28 @@ struct MeterView: View {
                 .help("隐藏桌面卡片")
             }
         }
+    }
+
+    private var codexHeader: some View {
+        HStack(spacing: 7) {
+            Circle()
+                .fill(Color.cyan.gradient)
+                .frame(width: 7, height: 7)
+            Text("CODEX")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(.secondary)
+            if let plan = store.snapshot.rateLimits?.planType, !plan.isEmpty {
+                Text(plan.uppercased())
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.cyan)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.cyan.opacity(0.12), in: Capsule())
+            }
+            Spacer()
+            SourcePill(label: "额度", origin: store.snapshot.rateOrigin)
+        }
+        .padding(.horizontal, 2)
     }
 
     @ViewBuilder
@@ -199,9 +213,8 @@ struct MeterView: View {
 
     private var sourceSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 12) {
-                SourcePill(label: "额度", origin: store.snapshot.rateOrigin)
-                SourcePill(label: "Token", origin: store.snapshot.tokenOrigin)
+            HStack(spacing: 10) {
+                SourcePill(label: "Codex Token", origin: store.snapshot.tokenOrigin)
                 Spacer()
                 Text("更新于 " + MeterFormat.updatedText(store.snapshot.updatedAt))
                     .font(.system(size: 9))
@@ -225,7 +238,7 @@ struct MeterView: View {
                 }
             }
             Button(action: actions.openUsagePage) {
-                Label("官方用量", systemImage: "arrow.up.right.square")
+                Label("Codex 用量", systemImage: "arrow.up.right.square")
             }
             Spacer()
             if presentation == .popover {
@@ -308,6 +321,7 @@ private struct SourcePill: View {
     private var color: Color {
         switch origin {
         case .official: return .mint
+        case .officialCache: return .orange
         case .localLogs: return .orange
         case .unavailable: return .secondary
         }
@@ -316,6 +330,7 @@ private struct SourcePill: View {
     private var shortOrigin: String {
         switch origin {
         case .official: return "官方"
+        case .officialCache: return "官方缓存"
         case .localLogs: return "本机估算"
         case .unavailable: return "暂无"
         }

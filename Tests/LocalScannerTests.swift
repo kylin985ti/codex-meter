@@ -81,6 +81,14 @@ struct LocalScannerTests {
         try require(result.rateLimits?.primary?.remainingPercent == 75, "expected 75% remaining")
         try require(result.filesScanned == 4, "expected four fixture files")
 
+        let currentSelection = RateLimitSelection.preferOfficial(current: result.rateLimits, cached: nil)
+        try require(currentSelection.origin == .official, "current official quota must win")
+        let cachedSelection = RateLimitSelection.preferOfficial(current: nil, cached: result.rateLimits)
+        try require(cachedSelection.origin == .officialCache, "official cache must replace log fallback")
+        try require(cachedSelection.snapshot?.primary?.remainingPercent == 75, "cached official quota should be retained")
+        let unavailableSelection = RateLimitSelection.preferOfficial(current: nil, cached: nil)
+        try require(unavailableSelection.origin == .unavailable, "missing official quota must stay unavailable")
+
         print("LocalScannerTests passed: total=\(result.today.totalTokens), remaining=\(Int(result.rateLimits!.primary!.remainingPercent))%")
     }
 

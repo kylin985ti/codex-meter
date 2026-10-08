@@ -17,6 +17,7 @@ swiftc \
   -target arm64-apple-macosx13.0 \
   -framework AppKit \
   -framework SwiftUI \
+  -lsqlite3 \
   "$ROOT"/Sources/*.swift \
   -o "$MACOS/CodexMeter"
 

@@ -11,7 +11,7 @@ struct AppServerFetchResult {
 final class AppServerClient {
     private let timeout: TimeInterval
 
-    init(timeout: TimeInterval = 10) {
+    init(timeout: TimeInterval = 30) {
         self.timeout = timeout
     }
 
@@ -105,7 +105,7 @@ final class AppServerClient {
                 "params": [
                     "clientInfo": [
                         "name": "codex-meter",
-                        "version": "1.0.0"
+                        "version": "1.1.1"
                     ]
                 ]
             ])

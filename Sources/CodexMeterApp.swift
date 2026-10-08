@@ -60,7 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func configurePopover() {
         popover.behavior = .transient
         popover.animates = true
-        popover.contentSize = NSSize(width: 368, height: 490)
+        popover.contentSize = NSSize(width: 392, height: 760)
         popover.contentViewController = NSHostingController(
             rootView: MeterView(store: store, presentation: .popover, actions: actions)
         )
@@ -68,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureDesktopPanel() {
         let panel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 360, height: 510),
+            contentRect: NSRect(x: 0, y: 0, width: 384, height: 760),
             styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -133,9 +133,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateStatusItem(_ snapshot: UsageSnapshot) {
-        let remaining = MeterFormat.percent(snapshot.headlineRemainingPercent)
-        statusItem?.button?.title = " " + remaining
-        statusItem?.button?.toolTip = "Codex 额度剩余 \(remaining) · 今日 \(MeterFormat.compactTokens(snapshot.todayTokens)) tokens"
+        let codexRemaining = MeterFormat.percent(snapshot.headlineRemainingPercent)
+        statusItem?.button?.title = " " + codexRemaining
+        statusItem?.button?.toolTip =
+            "Codex 额度剩余 \(codexRemaining)（\(snapshot.rateOrigin.rawValue)）· 今日 \(MeterFormat.compactTokens(snapshot.todayTokens)) tokens"
     }
 
     private func openUsagePage() {
