@@ -45,6 +45,8 @@ struct MeterView: View {
                 codexHeader
                 quotaSection
                 todaySection
+                ollamaHeader
+                ollamaSection
                 sourceSection
                 actionRow
             }
@@ -211,6 +213,53 @@ struct MeterView: View {
               : "仅估算本机今日写入 Codex 日志的 Token，不包含其他设备或未落地的云任务")
     }
 
+    private var ollamaHeader: some View {
+        HStack(spacing: 7) {
+            Circle()
+                .fill(Color.teal.gradient)
+                .frame(width: 7, height: 7)
+            Text("OLLAMA CLOUD")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(.secondary)
+            Spacer()
+            SourcePill(label: "额度", origin: store.snapshot.ollama?.origin ?? .unavailable)
+        }
+        .padding(.horizontal, 2)
+    }
+
+    @ViewBuilder
+    private var ollamaSection: some View {
+        if let ollama = store.snapshot.ollama, ollama.hasWindows {
+            VStack(spacing: 8) {
+                HStack(spacing: 10) {
+                    if let session = ollama.session {
+                        QuotaWindowCard(window: session)
+                    }
+                    if let weekly = ollama.weekly {
+                        QuotaWindowCard(window: weekly)
+                    }
+                }
+                OllamaStatStrip(
+                    requests24h: ollama.requests24h,
+                    requests7d: ollama.requests7d,
+                    purchasedUSD: ollama.purchasedUSD
+                )
+            }
+        } else if let note = store.snapshot.ollama?.note {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 11))
+                Text(note)
+                    .font(.system(size: 10))
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(.secondary)
+            .padding(12)
+            .background(MeterSurface())
+        }
+    }
+
     private var sourceSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 10) {
@@ -314,6 +363,37 @@ private struct TokenStat: View {
     }
 }
 
+private struct OllamaStatStrip: View {
+    let requests24h: Int?
+    let requests7d: Int?
+    let purchasedUSD: Double?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            stat(label: "24h 请求", value: requests24h.map(String.init) ?? "--")
+            stat(label: "7d 请求", value: requests7d.map(String.init) ?? "--")
+            if let purchasedUSD {
+                stat(label: "随用余额", value: String(format: "$%.2f", purchasedUSD))
+            }
+        }
+        .help("Ollama Cloud 官方接口只提供请求次数，不提供 token 用量")
+    }
+
+    private func stat(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 8, weight: .medium))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 7)
+        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+    }
+}
+
 private struct SourcePill: View {
     let label: String
     let origin: UsageOrigin
@@ -323,6 +403,7 @@ private struct SourcePill: View {
         case .official: return .mint
         case .officialCache: return .orange
         case .localLogs: return .orange
+        case .ollamaOfficial: return .mint
         case .unavailable: return .secondary
         }
     }
@@ -332,6 +413,7 @@ private struct SourcePill: View {
         case .official: return "官方"
         case .officialCache: return "官方缓存"
         case .localLogs: return "本机估算"
+        case .ollamaOfficial: return "官方"
         case .unavailable: return "暂无"
         }
     }

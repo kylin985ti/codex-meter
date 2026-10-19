@@ -78,6 +78,7 @@ enum UsageOrigin: String {
     case official = "官方 App Server"
     case officialCache = "官方上次成功数据"
     case localLogs = "本机日志估算"
+    case ollamaOfficial = "Ollama 官方接口"
     case unavailable = "暂无数据"
 }
 
@@ -99,6 +100,30 @@ struct RateLimitSelection {
     }
 }
 
+struct OllamaSnapshot: Equatable {
+    let session: RateLimitWindow?
+    let weekly: RateLimitWindow?
+    let purchasedUSD: Double?
+    let requests24h: Int?
+    let requests7d: Int?
+    let origin: UsageOrigin
+    let note: String?
+
+    var hasWindows: Bool {
+        session != nil || weekly != nil
+    }
+
+    static let unavailable = OllamaSnapshot(
+        session: nil,
+        weekly: nil,
+        purchasedUSD: nil,
+        requests24h: nil,
+        requests7d: nil,
+        origin: .unavailable,
+        note: nil
+    )
+}
+
 struct UsageSnapshot: Equatable {
     var rateLimits: RateLimitSnapshot?
     var todayTokens: Int64?
@@ -106,6 +131,7 @@ struct UsageSnapshot: Equatable {
     var lifetimeTokens: Int64?
     var rateOrigin: UsageOrigin
     var tokenOrigin: UsageOrigin
+    var ollama: OllamaSnapshot?
     var updatedAt: Date
     var note: String?
 
@@ -116,6 +142,7 @@ struct UsageSnapshot: Equatable {
         lifetimeTokens: nil,
         rateOrigin: .unavailable,
         tokenOrigin: .unavailable,
+        ollama: nil,
         updatedAt: Date(),
         note: nil
     )

@@ -4,6 +4,7 @@
 
 - Codex 短周期与周周期额度的剩余百分比和重置时间
 - Codex 今天的 Token 活动和本机估算明细
+- Ollama Cloud 的 5 小时 / 7 天额度剩余、重置时间与请求次数
 
 ## 数据来源
 
@@ -18,6 +19,25 @@
 
 本机回退模式不会读取会话正文，也不会访问 `~/.codex/auth.json`。本机估算不包含
 其他设备、未写入本机日志的云任务或已删除的日志，因此界面会明确标注“本机日志估算”。
+
+### Ollama Cloud
+
+Ollama 部分走官方接口，需要 `OLLAMA_API_KEY`：
+
+- `GET https://ollama.com/api/balance` —— 5 小时与 7 天窗口的剩余百分比、重置时间、随用余额
+- `GET https://ollama.com/api/usage?range=24h|7d&scope=self` —— 请求次数
+
+注意线上返回与官方文档存在偏差：`balance` 实际返回 `included.session` / `included.weekly`
+的 `remaining_percent`，`usage` 只提供 `request_count`，不含 token 数或美元消耗。
+因此 Ollama 区块显示的是剩余百分比与调用次数，不是 token 明细。
+
+API Key 的解析顺序：
+
+1. 环境变量 `OLLAMA_API_KEY`
+2. `~/.dsh/.env` 中的 `OLLAMA_API_KEY=...`
+3. `~/.codexmeter/config.json` 的 `{"ollamaApiKey": "..."}`
+
+缺少 Key 或 Key 失效时，卡片会显示一行提示，不影响 Codex 部分的显示。
 
 ## 使用
 
